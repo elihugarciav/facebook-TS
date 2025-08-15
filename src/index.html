@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Facebook Poster</title>
+  </head>
+  <body>
+    <h1>Aplicacion desarrollada con Typescript para publicar automaticamente a un pagina de facebook</h1>
+    <button id="run-worker">Presioname para publicar!!!</button>
+
+    <script>
+      const { ipcRenderer } = require('electron');
+      document.getElementById('run-worker').addEventListener('click', () => {
+        ipcRenderer.send('run-worker');
+      });
+    </script>
+  </body>
+</html>
