@@ -30,9 +30,9 @@ function runPublicador() {
 }
 
 // Endpoint para disparar publicador desde el navegador
-app.post("/run-worker", (req, res) => {
-  runPublicador();
-  res.send({ status: "started" });
+app.post("/run-worker", async(req, res) => {
+  const result = await runPublicador();
+  res.send({ result });
 });
 
 // Servir index.html

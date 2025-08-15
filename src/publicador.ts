@@ -12,13 +12,14 @@ const google_model = process.env.modelo_gemini!;
 const meta_token_acceso = process.env.meta_token_acceso!;
 const meta_id_pagina = process.env.meta_id_pagina!;
 
-async function main() {
+export async function main(): Promise<{ status: string; message: string }> {
   console.log("Buscando imágenes...");
   const imagePath = getFirstImage(imagenes_entrada);
 
   if (!imagePath) {
-    console.log("No hay imágenes para procesar.");
-    return;
+    const msg = "No hay imágenes para procesar.";
+    console.log(msg);
+    return {status: "empty", message: msg};
   }
 
   console.log("Imagen encontrada:", imagePath);
@@ -26,20 +27,33 @@ async function main() {
   try {
     console.log("Obteniendo descripción desde Gemini...");
     const description: any = await describeImage(imagePath, google_api_key, google_model);
-    console.log("Descripción:", description);
+    if(description.status === "OK"){
+      console.log("Descripción:", description.message);
+    }else{
+      return {status: description.status, message: description.message}
+    }
+    
 
     console.log("Publicando en Meta...");
     const success: any = await publishToMeta(imagePath, description, meta_id_pagina, meta_token_acceso);
 
-    if (success) {
+    if (success.status === "OK") {
       moveFile(imagePath, imagenes_procesadas);
+      return {
+        status: success.status,
+        message: success.message
+      };
     } else {
       moveFile(imagePath, imagenes_erroneas);
+      return {
+        status: success.status,
+        message: success.message
+      };
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error procesando la imagen:", err);
     moveFile(imagePath, imagenes_erroneas);
+    return{ status: "FALLO", message: err};
   }
 }
-
 main();

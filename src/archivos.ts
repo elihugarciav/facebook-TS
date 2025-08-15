@@ -18,6 +18,6 @@ export function leerArchivoComoTexto(ruta: string): string {
     return contenido;
   } catch (err) {
     console.error("Error leyendo el archivo:", err);
-    return "";
+    return "Error al leer el prompt";
   }
 }

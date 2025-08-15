@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Facebook Poster</title>
-  </head>
-  <body>
-    <h1>Aplicación desarrollada en Typescript para publicar automáticamente a Facebook</h1>
-    <button id="run-worker">Presióname para publicar!!!</button>
-    <p id="status"></p>
 
-    <script>
-      const btn = document.getElementById('run-worker');
-      const status = document.getElementById('status');
+<head>
+  <meta charset="UTF-8" />
+  <title>Facebook Poster</title>
+</head>
 
-      btn.addEventListener('click', async () => {
-        status.textContent = 'Iniciando proceso...';
-        try {
-          const res = await fetch('/run-worker', { method: 'POST' });
-          const data = await res.json();
-          status.textContent = data.status === 'started' ? 'Proceso iniciado ✅' : 'Error al iniciar ❌';
-        } catch (err) {
-          status.textContent = 'Error de conexión ❌';
-        }
-      });
-    </script>
-  </body>
+<body>
+  <h1>Aplicación desarrollada en Typescript para publicar automáticamente a Facebook</h1>
+  <button id="run-worker">Presióname para publicar!!!</button>
+  <p id="status"></p>
+
+  <script>
+    const btn = document.getElementById('run-worker');
+    const status = document.getElementById('status');
+
+    btn.addEventListener('click', async () => {
+      status.textContent = 'Iniciando proceso...';
+      try {
+        const res = await fetch('/run-worker', { method: 'POST' });
+        const data = await res.json();
+        status.textContent = data.message;
+      } catch (err) {
+        status.textContent = 'Error de conexión ❌';
+      }
+    });
+  </script>
+
+</body>
+
 </html>
