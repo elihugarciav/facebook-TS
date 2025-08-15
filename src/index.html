@@ -5,13 +5,23 @@
     <title>Facebook Poster</title>
   </head>
   <body>
-    <h1>Aplicacion desarrollada con Typescript para publicar automaticamente a un pagina de facebook</h1>
-    <button id="run-worker">Presioname para publicar!!!</button>
+    <h1>Aplicación desarrollada en Typescript para publicar automáticamente a Facebook</h1>
+    <button id="run-worker">Presióname para publicar!!!</button>
+    <p id="status"></p>
 
     <script>
-      const { ipcRenderer } = require('electron');
-      document.getElementById('run-worker').addEventListener('click', () => {
-        ipcRenderer.send('run-worker');
+      const btn = document.getElementById('run-worker');
+      const status = document.getElementById('status');
+
+      btn.addEventListener('click', async () => {
+        status.textContent = 'Iniciando proceso...';
+        try {
+          const res = await fetch('/run-worker', { method: 'POST' });
+          const data = await res.json();
+          status.textContent = data.status === 'started' ? 'Proceso iniciado ✅' : 'Error al iniciar ❌';
+        } catch (err) {
+          status.textContent = 'Error de conexión ❌';
+        }
       });
     </script>
   </body>
