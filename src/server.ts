@@ -1,38 +1,23 @@
 import express from "express";
 import path from "path";
-import { spawn } from "child_process";
+import { main as runPublicador } from "./publicador";
 
 const app = express();
 const PORT = 3000;
 
-// Servir HTML y public/ estático
+// Servir HTML y archivos estáticos
 app.use(express.static(path.join(__dirname)));
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// Función para ejecutar publicador.ts o .js
-function runPublicador() {
-  // Determinar archivo según entorno
-  const isDev = __dirname.includes("src");
-  const filePath = isDev
-    ? path.join(__dirname, "publicador.ts")
-    : path.join(__dirname, "publicador.js");
-
-  const command = isDev ? "ts-node" : "node";
-
-  const child = spawn(command, [filePath], {
-    stdio: "inherit",
-    env: process.env
-  });
-
-  child.on("exit", (code) => {
-    console.log("Publicador terminó con código:", code);
-  });
-}
-
 // Endpoint para disparar publicador desde el navegador
-app.post("/run-worker", async(req, res) => {
-  const result = await runPublicador();
-  res.send({ result });
+app.post("/run-worker", async (req, res) => {
+  try {
+    const result = await runPublicador(); // { status, message }
+    res.json(result);                     // enviar directamente al frontend
+  } catch (err: any) {
+    console.error("Error ejecutando publicador:", err);
+    res.status(500).json({ status: "FALLO", message: err.message || String(err) });
+  }
 });
 
 // Servir index.html

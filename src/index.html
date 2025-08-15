@@ -17,15 +17,31 @@
 
     btn.addEventListener('click', async () => {
       status.textContent = 'Iniciando proceso...';
+      status.style.color = 'black'; // color neutral mientras se procesa
       try {
         const res = await fetch('/run-worker', { method: 'POST' });
         const data = await res.json();
+
+        // Cambiar color según el status
+        if (data.status === "OK") {
+          status.style.color = 'green';
+        } else if (data.status === "ERROR" || data.status === "empty") {
+          status.style.color = 'red';
+        } else {
+          status.style.color = 'orange';
+        }
+
+        // Mostrar mensaje
         status.textContent = data.message;
+
       } catch (err) {
         status.textContent = 'Error de conexión ❌';
+        status.style.color = 'red';
+        console.error(err);
       }
     });
   </script>
+
 
 </body>
 
