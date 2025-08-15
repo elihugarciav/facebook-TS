@@ -1,0 +1,7 @@
+src/.env
+imagenes/entrada/*
+imagenes/erroneas/*
+imagenes/procesadas/*
+!imagenes/entrada/.gitkeep
+!imagenes/erroneas/.gitkeep
+!imagenes/procesadas/.gitkeep

@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: facebook-poster-ts
+    ports:
+      - "3000:3000"
+    volumes:
+      # codigo
+      - ./src:/app/src
+      # Montar carpeta de imágenes y recursos
+      - ./imagenes:/app/imagenes
+      - ./recursos:/app/recursos
+    env_file:
+      - ./src/.env
+    command: npx ts-node-dev --respawn --transpile-only src/server.ts
