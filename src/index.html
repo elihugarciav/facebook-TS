@@ -4,45 +4,115 @@
 <head>
   <meta charset="UTF-8" />
   <title>Facebook Poster</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f6fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2f3640;
+      margin-bottom: 30px;
+    }
+
+    button {
+      background-color: #1877f2;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #145dbf;
+    }
+
+    #status {
+      width: 100%;
+      max-width: 600px;
+      min-height: 200px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      padding: 15px;
+      overflow-y: auto;
+      font-family: monospace;
+      line-height: 1.5;
+    }
+
+    #status p {
+      margin: 4px 0;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
 </head>
 
 <body>
   <h1>Aplicación desarrollada en Typescript para publicar automáticamente a Facebook</h1>
   <button id="run-worker">Presióname para publicar!!!</button>
-  <p id="status"></p>
+  <div id="status"></div>
 
   <script>
     const btn = document.getElementById('run-worker');
     const status = document.getElementById('status');
 
-    btn.addEventListener('click', async () => {
-      status.textContent = 'Iniciando proceso...';
-      status.style.color = 'black'; // color neutral mientras se procesa
-      try {
-        const res = await fetch('/run-worker', { method: 'POST' });
-        const data = await res.json();
+    btn.addEventListener('click', () => {
+      status.innerHTML = ''; // limpiar mensajes previos
 
-        // Cambiar color según el status
-        if (data.status === "OK") {
-          status.style.color = 'green';
-        } else if (data.status === "ERROR" || data.status === "empty") {
-          status.style.color = 'red';
-        } else {
-          status.style.color = 'orange';
-        }
+      const evtSource = new EventSource('/run-worker-stream');
 
-        // Mostrar mensaje
-        status.textContent = data.message;
+      // Recibir logs intermedios
+      evtSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const p = document.createElement('p');
 
-      } catch (err) {
-        status.textContent = 'Error de conexión ❌';
-        status.style.color = 'red';
-        console.error(err);
-      }
+        if (data.status === "OK") p.style.color = 'green';
+        else if (data.status === "ERROR" || data.status === "empty" || data.status === "FALLO") p.style.color = 'red';
+        else p.style.color = 'orange';
+
+        p.textContent = data.message;
+        status.appendChild(p);
+        status.scrollTop = status.scrollHeight; // hacer scroll automático
+      };
+
+      // Evento personalizado de fin
+      evtSource.addEventListener('end', () => {
+        const p = document.createElement('p');
+        p.textContent = 'Proceso finalizado ✅';
+        p.style.color = 'blue';
+        status.appendChild(p);
+        status.scrollTop = status.scrollHeight;
+        evtSource.close();
+      });
+
+      // Errores genuinos
+      evtSource.onerror = () => {
+        const p = document.createElement('p');
+        p.textContent = 'Error de conexión ❌';
+        p.style.color = 'red';
+        status.appendChild(p);
+        status.scrollTop = status.scrollHeight;
+        evtSource.close();
+      };
     });
   </script>
-
-
 </body>
 
 </html>

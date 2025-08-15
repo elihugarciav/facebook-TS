@@ -12,48 +12,59 @@ const google_model = process.env.modelo_gemini!;
 const meta_token_acceso = process.env.meta_token_acceso!;
 const meta_id_pagina = process.env.meta_id_pagina!;
 
-export async function main(): Promise<{ status: string; message: string }> {
-  console.log("Buscando imágenes...");
+// Agregamos un parámetro opcional onLog
+export async function main(
+  onLog?: (log: { status: string; message: string }) => void
+): Promise<{ status: string; message: string }> {
+  
+  function log(status: string, message: string) {
+    console.log(message);
+    if (onLog) onLog({ status, message });
+  }
+
+  log("INFO", "Buscando imágenes...");
   const imagePath = getFirstImage(imagenes_entrada);
 
   if (!imagePath) {
     const msg = "No hay imágenes para procesar.";
-    console.log(msg);
-    return {status: "empty", message: msg};
+    console.log(msg)
+    return { status: "empty", message: msg };
   }
 
-  console.log("Imagen encontrada:", imagePath);
+  log("INFO", `Imagen encontrada: ${imagePath}`);
 
   try {
-    console.log("Obteniendo descripción desde Gemini...");
+    log("INFO", "Obteniendo descripción desde Gemini...");
     const description: any = await describeImage(imagePath, google_api_key, google_model);
-    if(description.status === "OK"){
-      console.log("Descripción:", description.message);
-    }else{
-      return {status: description.status, message: description.message}
-    }
-    
 
-    console.log("Publicando en Meta...");
-    const success: any = await publishToMeta(imagePath, description, meta_id_pagina, meta_token_acceso);
+    if (description.status === "OK") {
+      log("OK", `Descripción: ${description.message}`);
+    } else {
+      console.log(description.status, description.message);
+      return { status: description.status, message: description.message };
+    }
+
+    log("INFO", "Publicando en Meta...");
+    const success: any = await publishToMeta(imagePath, description.message, meta_id_pagina, meta_token_acceso);
 
     if (success.status === "OK") {
       moveFile(imagePath, imagenes_procesadas);
-      return {
-        status: success.status,
-        message: success.message
-      };
+      console.log(success.status, success.message);
+      return { status: success.status, message: success.message };
     } else {
       moveFile(imagePath, imagenes_erroneas);
-      return {
-        status: success.status,
-        message: success.message
-      };
+      console.log(success.status, success.message);
+      return { status: success.status, message: success.message };
     }
+
   } catch (err: any) {
-    console.error("Error procesando la imagen:", err);
+    log("FALLO", `Error procesando la imagen: ${err}`);
     moveFile(imagePath, imagenes_erroneas);
-    return{ status: "FALLO", message: err};
+    return { status: "FALLO", message: String(err) };
   }
 }
-main();
+
+// Para que funcione standalone (opcional)
+if (require.main === module) {
+  main();
+}

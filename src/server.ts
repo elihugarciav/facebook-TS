@@ -5,22 +5,38 @@ import { main as runPublicador } from "./publicador";
 const app = express();
 const PORT = 3000;
 
-// Servir HTML y archivos estáticos
 app.use(express.static(path.join(__dirname)));
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// Endpoint para disparar publicador desde el navegador
-app.post("/run-worker", async (req, res) => {
+app.get("/run-worker-stream", async (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  function sendMessage(data: any) {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  }
+
+  function sendEnd() {
+    res.write(`event: end\ndata: {}\n\n`);
+    res.end();
+  }
+
   try {
-    const result = await runPublicador(); // { status, message }
-    res.json(result);                     // enviar directamente al frontend
+    // Pasamos callback para logs intermedios
+    const result = await runPublicador((log: { status: string; message: string }) => {
+      sendMessage(log);
+    });
+
+    sendMessage(result); // mensaje final
+    sendEnd();           // señal de fin
   } catch (err: any) {
-    console.error("Error ejecutando publicador:", err);
-    res.status(500).json({ status: "FALLO", message: err.message || String(err) });
+    sendMessage({ status: "FALLO", message: err.message || String(err) });
+    sendEnd();
   }
 });
 
-// Servir index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
